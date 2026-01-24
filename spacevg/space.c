@@ -65,7 +65,8 @@ static struct {
     // Ship
     float ship_x, ship_y;
     float ship_vx, ship_vy;
-    int ship_dir;
+    float ship_angle;      // Rotation angle in radians (continuous)
+    float rotation_rate;   // Current rotation rate
     int ship_alive;
     int ship_flash;
 
@@ -139,7 +140,8 @@ static void init_game(void) {
     game.ship_y = 240;
     game.ship_vx = 0;
     game.ship_vy = 0;
-    game.ship_dir = 0;
+    game.ship_angle = -M_PI_2;  // Start pointing up
+    game.rotation_rate = 0;
     game.ship_alive = 1;
     game.ship_flash = 0;
 
@@ -204,18 +206,15 @@ static void update_game(void) {
     // Decrement flash timer
     if (game.ship_flash > 0) game.ship_flash--;
 
-    // Turning
-    if (game.turn_cooldown > 0) {
-        game.turn_cooldown--;
+    // Turning - continuous rotation like Swift version
+    if (game.key_left) {
+        game.rotation_rate = -0.05f;
+    } else if (game.key_right) {
+        game.rotation_rate = 0.05f;
     } else {
-        if (game.key_left) {
-            game.ship_dir = (game.ship_dir - 1) & 7;
-            game.turn_cooldown = 6;
-        } else if (game.key_right) {
-            game.ship_dir = (game.ship_dir + 1) & 7;
-            game.turn_cooldown = 6;
-        }
+        game.rotation_rate = 0;
     }
+    game.ship_angle += game.rotation_rate;
 
     // Thrust
     if (game.thrust_cooldown > 0) {
@@ -223,8 +222,8 @@ static void update_game(void) {
     } else if (game.key_up || game.key_down) {
         game.thrust_cooldown = 6;
 
-        float dx = dir_dx[game.ship_dir] / 2.0f;
-        float dy = dir_dy[game.ship_dir] / 2.0f;
+        float dx = cosf(game.ship_angle);
+        float dy = sinf(game.ship_angle);
 
         if (game.key_up) {
             game.ship_vx += dx;
@@ -251,8 +250,8 @@ static void update_game(void) {
             if (game.bullets[i].life == 0) {
                 game.bullets[i].x = game.ship_x;
                 game.bullets[i].y = game.ship_y;
-                game.bullets[i].vx = dir_dx[game.ship_dir] * 4;
-                game.bullets[i].vy = dir_dy[game.ship_dir] * 4;
+                game.bullets[i].vx = cosf(game.ship_angle) * 8;
+                game.bullets[i].vy = sinf(game.ship_angle) * 8;
                 game.bullets[i].life = 60;
                 break;
             }
@@ -326,6 +325,8 @@ static void update_game(void) {
                     game.ship_y = 240;
                     game.ship_vx = 0;
                     game.ship_vy = 0;
+                    game.ship_angle = -M_PI_2;  // Reset to pointing up
+                    game.rotation_rate = 0;
                     game.ship_flash = 90;
                 }
                 return;
@@ -617,25 +618,23 @@ static void render_game(void) {
         }
     }
 
-    // Draw ship
+    // Draw ship - rotate around center point
     if (game.ship_alive && (game.ship_flash == 0 || (game.ship_flash & 4) == 0)) {
         nvgStrokeColor(vg, nvgRGB(0, 255, 0));
         nvgStrokeWidth(vg, 1.0f);
 
-        const float* tri = ship_tri[game.ship_dir];
-        float x1 = game.ship_x + tri[0];
-        float y1 = game.ship_y + tri[1];
-        float x2 = game.ship_x + tri[2];
-        float y2 = game.ship_y + tri[3];
-        float x3 = game.ship_x + tri[4];
-        float y3 = game.ship_y + tri[5];
+        nvgSave(vg);
+        nvgTranslate(vg, game.ship_x, game.ship_y);
+        nvgRotate(vg, game.ship_angle + M_PI_2);  // +90° because ship points up
 
+        // Ship triangle at origin (pointing up before rotation)
         nvgBeginPath(vg);
-        nvgMoveTo(vg, x1, y1);
-        nvgLineTo(vg, x2, y2);
-        nvgLineTo(vg, x3, y3);
+        nvgMoveTo(vg, 0, -10);   // nose
+        nvgLineTo(vg, -7, 7);    // left wing
+        nvgLineTo(vg, 7, 7);     // right wing
         nvgClosePath(vg);
         nvgStroke(vg);
+        nvgRestore(vg);
     }
 
     // Draw HUD - lives
