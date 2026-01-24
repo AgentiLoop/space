@@ -667,8 +667,28 @@ static void render_start(void) {
     nvgClosePath(vg);
     nvgStroke(vg);
 
-    // Menu options - aligned text
-    nvgStrokeColor(vg, nvgRGB(255, 255, 255));
+    // Menu options - rainbow effect
+    // Calculate rainbow color based on time
+    Uint32 ticks = SDL_GetTicks();
+    float hue = fmodf((float)ticks / 20.0f, 360.0f);  // Cycle through hues
+
+    // HSV to RGB conversion (saturation=1, value=1)
+    float h = hue / 60.0f;
+    int i = (int)h;
+    float f = h - i;
+    float q = 1.0f - f;
+    float t = f;
+    float r, g, b;
+    switch (i % 6) {
+        case 0: r = 1; g = t; b = 0; break;
+        case 1: r = q; g = 1; b = 0; break;
+        case 2: r = 0; g = 1; b = t; break;
+        case 3: r = 0; g = q; b = 1; break;
+        case 4: r = t; g = 0; b = 1; break;
+        default: r = 1; g = 0; b = q; break;
+    }
+
+    nvgStrokeColor(vg, nvgRGBf(r, g, b));
     nvgStrokeWidth(vg, 1.5f);
 
     // Row 1: "1  ORIGINAL" at y=280-300
@@ -733,7 +753,23 @@ static void render_start(void) {
     nvgMoveTo(vg, x+5, y1+10); nvgLineTo(vg, 550, y1+10);
     nvgStroke(vg);
 
-    // Row 2: "2  DELUXE" at y=330-350
+    // Row 2: "2  DELUXE" at y=330-350 - offset rainbow color
+    float hue2 = fmodf(hue + 180.0f, 360.0f);  // Opposite color
+    h = hue2 / 60.0f;
+    i = (int)h;
+    f = h - i;
+    q = 1.0f - f;
+    t = f;
+    switch (i % 6) {
+        case 0: r = 1; g = t; b = 0; break;
+        case 1: r = q; g = 1; b = 0; break;
+        case 2: r = 0; g = 1; b = t; break;
+        case 3: r = 0; g = q; b = 1; break;
+        case 4: r = t; g = 0; b = 1; break;
+        default: r = 1; g = 0; b = q; break;
+    }
+    nvgStrokeColor(vg, nvgRGBf(r, g, b));
+
     float y2 = 330;
     nvgStrokeWidth(vg, 1.5f);
     // "2" - same size as "1" (20px tall)
