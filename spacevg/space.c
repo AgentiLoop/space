@@ -39,11 +39,21 @@ static const float ship_tri[8][6] = {
 static const int dir_dx[] = { 0, 2, 2, 2, 0, -2, -2, -2 };
 static const int dir_dy[] = { -2, -2, 0, 2, 2, 2, 0, -2 };
 
+// Asteroid sizes (matching Swift version)
+#define SIZE_LARGE  0
+#define SIZE_MEDIUM 1
+#define SIZE_SMALL  2
+
+#define MAX_ASTEROID_VERTS 24  // Large: 8 points × 3 = 24
+
 // Obstacle structure
 typedef struct {
     float x, y;
     float vx, vy;
     int active;
+    int size;           // SIZE_LARGE, SIZE_MEDIUM, SIZE_SMALL
+    int num_verts;      // Number of vertices in shape
+    float verts[MAX_ASTEROID_VERTS][2];  // Pre-generated vertex positions
 } Obstacle;
 
 // Bullet structure
@@ -97,7 +107,79 @@ static unsigned int random_num(void) {
     return (unsigned int)(game.random_seed >> 33);
 }
 
-// Spawn obstacles for current level (matches assembly logic)
+// Random float between 0 and 1
+static float random_float(void) {
+    return (float)(random_num() % 10000) / 10000.0f;
+}
+
+// Generate asteroid shape (like Swift's createAsteroidPath)
+static void generate_asteroid_shape(Obstacle* o, int size) {
+    // Size parameters matching Swift version
+    float radius;
+    int base_points;
+
+    switch (size) {
+        case SIZE_LARGE:  radius = 40.0f; base_points = 8; break;
+        case SIZE_MEDIUM: radius = 20.0f; base_points = 6; break;
+        case SIZE_SMALL:  radius = 10.0f; base_points = 4; break;
+        default:          radius = 40.0f; base_points = 8; break;
+    }
+
+    o->size = size;
+    o->num_verts = base_points * 3;  // 3x points for smoother shape
+
+    float angle_step = (2.0f * M_PI) / (float)base_points;
+
+    for (int i = 0; i < o->num_verts; i++) {
+        float base_angle = angle_step * (float)i / 3.0f;
+
+        // Radius variation based on point type
+        float variation;
+        if (i % 3 == 0) {
+            // Main points - moderate variation (0.85 to 1.15)
+            variation = 0.85f + random_float() * 0.30f;
+        } else {
+            // Intermediate points - more variation (0.7 to 1.2)
+            variation = 0.70f + random_float() * 0.50f;
+        }
+
+        float r = radius * variation;
+        o->verts[i][0] = cosf(base_angle) * r;
+        o->verts[i][1] = sinf(base_angle) * r;
+    }
+}
+
+// Find empty obstacle slot
+static int find_empty_obstacle_slot(void) {
+    for (int i = 0; i < MAX_OBSTACLES; i++) {
+        if (!game.obstacles[i].active) return i;
+    }
+    return -1;
+}
+
+// Spawn split asteroids (2 smaller ones from a destroyed asteroid)
+static void spawn_split_asteroids(float x, float y, int new_size) {
+    for (int s = 0; s < 2; s++) {
+        int slot = find_empty_obstacle_slot();
+        if (slot < 0) return;  // No room
+
+        Obstacle* o = &game.obstacles[slot];
+        o->x = x;
+        o->y = y;
+
+        // Random velocity in opposite-ish directions
+        float angle = (s == 0) ? random_float() * M_PI : random_float() * M_PI + M_PI;
+        float speed = 1.0f + random_float() * 2.0f;
+        o->vx = cosf(angle) * speed;
+        o->vy = sinf(angle) * speed;
+
+        generate_asteroid_shape(o, new_size);
+        o->active = 1;
+        game.rocks_left++;
+    }
+}
+
+// Spawn obstacles for current level
 static void spawn_level_obstacles(void) {
     // Clear ALL obstacle slots to inactive
     for (int i = 0; i < MAX_OBSTACLES; i++) {
@@ -130,6 +212,14 @@ static void spawn_level_obstacles(void) {
         if (vy == 0) vy = -1;
         o->vy = vy;
 
+        // Random size: 60% large, 30% medium, 10% small
+        int size_roll = random_num() % 100;
+        int size;
+        if (size_roll < 60) size = SIZE_LARGE;
+        else if (size_roll < 90) size = SIZE_MEDIUM;
+        else size = SIZE_SMALL;
+
+        generate_asteroid_shape(o, size);
         o->active = 1;
     }
 }
@@ -311,11 +401,21 @@ static void update_game(void) {
         Obstacle* o = &game.obstacles[i];
         if (!o->active) continue;
 
+        // Get collision radius based on asteroid size
+        float hit_radius;
+        switch (o->size) {
+            case SIZE_LARGE:  hit_radius = 35.0f; break;
+            case SIZE_MEDIUM: hit_radius = 18.0f; break;
+            case SIZE_SMALL:  hit_radius = 9.0f;  break;
+            default:          hit_radius = 35.0f; break;
+        }
+
         // Ship collision (if not flashing)
         if (game.ship_flash == 0) {
             float dx = game.ship_x - o->x;
             float dy = game.ship_y - o->y;
-            if (fabsf(dx) < 18 && fabsf(dy) < 18) {
+            float dist = sqrtf(dx*dx + dy*dy);
+            if (dist < hit_radius + 8) {  // 8 = ship radius
                 game.lives--;
                 if (game.lives <= 0) {
                     game.ship_alive = 0;
@@ -339,20 +439,37 @@ static void update_game(void) {
             if (b->life > 0) {
                 float dx = b->x - o->x;
                 float dy = b->y - o->y;
-                if (fabsf(dx) < 15 && fabsf(dy) < 15) {
-                    // Hit! Deactivate both and add score
+                float dist = sqrtf(dx*dx + dy*dy);
+                if (dist < hit_radius) {
+                    // Hit!
                     b->life = 0;
+                    float hit_x = o->x;
+                    float hit_y = o->y;
+                    int hit_size = o->size;
                     o->active = 0;
-                    game.score += 5;
-
-                    // Decrement rocks_left and check for level complete
                     game.rocks_left--;
+
+                    // Score: small=100, medium=50, large=20 (like original)
+                    switch (hit_size) {
+                        case SIZE_LARGE:  game.score += 20;  break;
+                        case SIZE_MEDIUM: game.score += 50;  break;
+                        case SIZE_SMALL:  game.score += 100; break;
+                    }
+
+                    // Split into smaller asteroids
+                    if (hit_size == SIZE_LARGE) {
+                        spawn_split_asteroids(hit_x, hit_y, SIZE_MEDIUM);
+                    } else if (hit_size == SIZE_MEDIUM) {
+                        spawn_split_asteroids(hit_x, hit_y, SIZE_SMALL);
+                    }
+                    // Small asteroids just disappear
+
+                    // Check for level complete
                     if (game.rocks_left <= 0) {
-                        // Level complete!
                         game.level++;
                         game.score += 5000;
                         spawn_level_obstacles();
-                        return;  // Exit update immediately
+                        return;
                     }
                     break;
                 }
@@ -590,17 +707,17 @@ static void render_game(void) {
 
     nvgBeginFrame(vg, winW, winH, pxRatio);
 
-    // Draw obstacles as diamonds
-    nvgStrokeColor(vg, nvgRGB(200, 150, 50));
-    nvgStrokeWidth(vg, 1.0f);
+    // Draw asteroids with proper shapes
+    nvgStrokeColor(vg, nvgRGB(200, 150, 50));  // Original brown color
+    nvgStrokeWidth(vg, 1.5f);
     for (int i = 0; i < MAX_OBSTACLES; i++) {
         Obstacle* o = &game.obstacles[i];
-        if (o->active) {
+        if (o->active && o->num_verts > 0) {
             nvgBeginPath(vg);
-            nvgMoveTo(vg, o->x + 8, o->y);      // top
-            nvgLineTo(vg, o->x + 16, o->y + 8); // right
-            nvgLineTo(vg, o->x + 8, o->y + 16); // bottom
-            nvgLineTo(vg, o->x, o->y + 8);      // left
+            nvgMoveTo(vg, o->x + o->verts[0][0], o->y + o->verts[0][1]);
+            for (int v = 1; v < o->num_verts; v++) {
+                nvgLineTo(vg, o->x + o->verts[v][0], o->y + o->verts[v][1]);
+            }
             nvgClosePath(vg);
             nvgStroke(vg);
         }
