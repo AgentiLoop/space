@@ -90,6 +90,7 @@ static struct {
     // Stats
     int lives;
     int score;
+    int last_score;  // Score from last game (shown on title screen)
     int level;
     int rocks_left;
 
@@ -299,13 +300,10 @@ static void process_events(void) {
         }
     }
 
-    // State transitions on space press
+    // State transitions on space press (only used if neither 1 nor 2 pressed)
     if (game.key_space && !game.key_space_prev) {
         if (game.state == STATE_START) {
-            game.state = STATE_PLAYING;
-        } else if (game.state == STATE_GAMEOVER) {
-            init_game();
-            game.state = STATE_PLAYING;
+            game.state = STATE_PLAYING;  // Default to original mode
         }
     }
 }
@@ -327,14 +325,10 @@ static void update_game(void) {
     }
     game.ship_angle += game.rotation_rate;
 
-    // Thrust
-    if (game.thrust_cooldown > 0) {
-        game.thrust_cooldown--;
-    } else if (game.key_up || game.key_down) {
-        game.thrust_cooldown = 6;
-
-        float dx = cosf(game.ship_angle);
-        float dy = sinf(game.ship_angle);
+    // Thrust - apply continuously (no cooldown) for smooth movement
+    if (game.key_up || game.key_down) {
+        float dx = cosf(game.ship_angle) * 0.15f;  // Smaller per-frame thrust
+        float dy = sinf(game.ship_angle) * 0.15f;
 
         if (game.key_up) {
             game.ship_vx += dx;
@@ -379,15 +373,12 @@ static void update_game(void) {
     if (game.ship_y >= SCREEN_H) game.ship_y -= SCREEN_H;
     if (game.ship_y < 0) game.ship_y += SCREEN_H;
 
-    // Friction
-    game.friction_counter++;
-    if (game.friction_counter >= 30) {
-        game.friction_counter = 0;
-        if (game.ship_vx > 0) game.ship_vx--;
-        else if (game.ship_vx < 0) game.ship_vx++;
-        if (game.ship_vy > 0) game.ship_vy--;
-        else if (game.ship_vy < 0) game.ship_vy++;
-    }
+    // Friction - gradual damping
+    game.ship_vx *= 0.995f;
+    game.ship_vy *= 0.995f;
+    // Stop completely if very slow
+    if (fabsf(game.ship_vx) < 0.01f) game.ship_vx = 0;
+    if (fabsf(game.ship_vy) < 0.01f) game.ship_vy = 0;
 
     // Update bullets
     for (int i = 0; i < MAX_BULLETS; i++) {
@@ -445,7 +436,8 @@ static void update_game(void) {
                 game.lives--;
                 if (game.lives <= 0) {
                     game.ship_alive = 0;
-                    game.state = STATE_GAMEOVER;
+                    game.last_score = game.score;  // Save score for title screen
+                    game.state = STATE_START;
                 } else {
                     game.ship_x = 400;
                     game.ship_y = 240;
@@ -667,29 +659,49 @@ static void render_start(void) {
     nvgClosePath(vg);
     nvgStroke(vg);
 
-    // Menu options - rainbow effect
-    // Calculate rainbow color based on time
+    // Menu options - 2-color rainbow gradient shimmer (one direction only)
     Uint32 ticks = SDL_GetTicks();
-    float hue = fmodf((float)ticks / 20.0f, 360.0f);  // Cycle through hues
+    float hue1 = fmodf((float)ticks * 0.1f, 360.0f);   // Continuous one-direction cycle
+    float hue2 = fmodf(hue1 + 60.0f, 360.0f);          // Second color 60 degrees ahead
 
-    // HSV to RGB conversion (saturation=1, value=1)
-    float h = hue / 60.0f;
-    int i = (int)h;
-    float f = h - i;
+    // HSV to RGB for color 1
+    float h = hue1 / 60.0f;
+    int idx = (int)h;
+    float f = h - idx;
     float q = 1.0f - f;
     float t = f;
-    float r, g, b;
-    switch (i % 6) {
-        case 0: r = 1; g = t; b = 0; break;
-        case 1: r = q; g = 1; b = 0; break;
-        case 2: r = 0; g = 1; b = t; break;
-        case 3: r = 0; g = q; b = 1; break;
-        case 4: r = t; g = 0; b = 1; break;
-        default: r = 1; g = 0; b = q; break;
+    float r1, g1, b1;
+    switch (idx % 6) {
+        case 0: r1 = 1; g1 = t; b1 = 0; break;
+        case 1: r1 = q; g1 = 1; b1 = 0; break;
+        case 2: r1 = 0; g1 = 1; b1 = t; break;
+        case 3: r1 = 0; g1 = q; b1 = 1; break;
+        case 4: r1 = t; g1 = 0; b1 = 1; break;
+        default: r1 = 1; g1 = 0; b1 = q; break;
     }
 
-    nvgStrokeColor(vg, nvgRGBf(r, g, b));
+    // HSV to RGB for color 2
+    h = hue2 / 60.0f;
+    idx = (int)h;
+    f = h - idx;
+    q = 1.0f - f;
+    t = f;
+    float r2, g2, b2;
+    switch (idx % 6) {
+        case 0: r2 = 1; g2 = t; b2 = 0; break;
+        case 1: r2 = q; g2 = 1; b2 = 0; break;
+        case 2: r2 = 0; g2 = 1; b2 = t; break;
+        case 3: r2 = 0; g2 = q; b2 = 1; break;
+        case 4: r2 = t; g2 = 0; b2 = 1; break;
+        default: r2 = 1; g2 = 0; b2 = q; break;
+    }
+
+    // Create gradient paint for row 1 (vertical - top to bottom)
+    NVGpaint gradient1 = nvgLinearGradient(vg, 400, 270, 400, 310,
+        nvgRGBf(r1, g1, b1), nvgRGBf(r2, g2, b2));
+
     nvgStrokeWidth(vg, 1.5f);
+    nvgStrokePaint(vg, gradient1);
 
     // Row 1: "1  ORIGINAL" at y=280-300
     float y1 = 280;
@@ -753,22 +765,25 @@ static void render_start(void) {
     nvgMoveTo(vg, x+5, y1+10); nvgLineTo(vg, 550, y1+10);
     nvgStroke(vg);
 
-    // Row 2: "2  DELUXE" at y=330-350 - offset rainbow color
-    float hue2 = fmodf(hue + 180.0f, 360.0f);  // Opposite color
-    h = hue2 / 60.0f;
-    i = (int)h;
-    f = h - i;
+    // Row 2: "2  DELUXE" - 1 color step ahead (r2,g2,b2 to r3,g3,b3)
+    float hue3 = fmodf(hue2 + 60.0f, 360.0f);  // 1 step ahead of hue2
+    h = hue3 / 60.0f;
+    idx = (int)h;
+    f = h - idx;
     q = 1.0f - f;
     t = f;
-    switch (i % 6) {
-        case 0: r = 1; g = t; b = 0; break;
-        case 1: r = q; g = 1; b = 0; break;
-        case 2: r = 0; g = 1; b = t; break;
-        case 3: r = 0; g = q; b = 1; break;
-        case 4: r = t; g = 0; b = 1; break;
-        default: r = 1; g = 0; b = q; break;
+    float r3, g3, b3;
+    switch (idx % 6) {
+        case 0: r3 = 1; g3 = t; b3 = 0; break;
+        case 1: r3 = q; g3 = 1; b3 = 0; break;
+        case 2: r3 = 0; g3 = 1; b3 = t; break;
+        case 3: r3 = 0; g3 = q; b3 = 1; break;
+        case 4: r3 = t; g3 = 0; b3 = 1; break;
+        default: r3 = 1; g3 = 0; b3 = q; break;
     }
-    nvgStrokeColor(vg, nvgRGBf(r, g, b));
+    NVGpaint gradient2 = nvgLinearGradient(vg, 400, 320, 400, 360,
+        nvgRGBf(r2, g2, b2), nvgRGBf(r3, g3, b3));
+    nvgStrokePaint(vg, gradient2);
 
     float y2 = 330;
     nvgStrokeWidth(vg, 1.5f);
@@ -823,6 +838,13 @@ static void render_start(void) {
     nvgBeginPath(vg);
     nvgMoveTo(vg, x+5, y2+10); nvgLineTo(vg, 550, y2+10);
     nvgStroke(vg);
+
+    // Show last score at bottom if there is one
+    if (game.last_score > 0) {
+        nvgStrokeColor(vg, nvgRGB(255, 255, 0));  // Yellow
+        nvgStrokeWidth(vg, 1.5f);
+        draw_number(vg, game.last_score, 350, 420, 2);
+    }
 
     nvgEndFrame(vg);
     SDL_GL_SwapWindow(game.window);
@@ -1011,6 +1033,7 @@ int main(int argc, char* argv[]) {
     game.random_seed = (unsigned long)time(NULL);
     game.running = 1;
     game.state = STATE_START;
+    game.last_score = 0;  // No previous score yet
     init_game();
 
     // Main loop
