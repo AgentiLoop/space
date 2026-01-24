@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "mcp__xcf-server__build_project",
+      "Bash(make clean:*)",
+      "Bash(make)",
+      "Bash(./space)",
+      "WebSearch",
+      "Bash(brew install:*)",
+      "Bash(nm:*)",
+      "Bash(otool -tV:*)",
+      "WebFetch(domain:users.rust-lang.org)",
+      "WebFetch(domain:discourse.libsdl.org)",
+      "WebFetch(domain:www.ferzkopp.net)",
+      "WebFetch(domain:www.geeksforgeeks.org)",
+      "Bash(brew list:*)",
+      "Bash(brew search:*)"
+    ]
+  }
+}
