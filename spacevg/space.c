@@ -667,107 +667,125 @@ static void render_start(void) {
     nvgClosePath(vg);
     nvgStroke(vg);
 
-    // "Press 1 for Original" using vector lines
+    // Menu options - aligned text
     nvgStrokeColor(vg, nvgRGB(255, 255, 255));
     nvgStrokeWidth(vg, 1.5f);
 
-    // "1"
+    // Row 1: "1  ORIGINAL" at y=280-300
+    float y1 = 280;
+    // "1" - same size as "2" (20px tall)
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 240, 280); nvgLineTo(vg, 250, 270); nvgLineTo(vg, 250, 310);
-    nvgMoveTo(vg, 240, 310); nvgLineTo(vg, 260, 310);
+    nvgMoveTo(vg, 255, y1+3); nvgLineTo(vg, 262, y1); nvgLineTo(vg, 262, y1+20);
+    nvgMoveTo(vg, 252, y1+20); nvgLineTo(vg, 272, y1+20);
     nvgStroke(vg);
 
-    // "ORIGINAL" text
-    nvgBeginPath(vg);
-    nvgMoveTo(vg, 280, 280); nvgLineTo(vg, 520, 280);  // line under text
-    nvgStroke(vg);
-
-    // Draw "ORIGINAL" label
-    nvgStrokeWidth(vg, 1.0f);
+    // "ORIGINAL" - each letter 12px wide, starting at x=290
+    nvgStrokeWidth(vg, 1.2f);
+    float x = 290;
     // O
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 285, 275); nvgLineTo(vg, 295, 275); nvgLineTo(vg, 295, 295);
-    nvgLineTo(vg, 285, 295); nvgClosePath(vg);
+    nvgMoveTo(vg, x, y1); nvgLineTo(vg, x+10, y1); nvgLineTo(vg, x+10, y1+20);
+    nvgLineTo(vg, x, y1+20); nvgClosePath(vg);
     nvgStroke(vg);
+    x += 14;
     // R
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 300, 295); nvgLineTo(vg, 300, 275); nvgLineTo(vg, 310, 275);
-    nvgLineTo(vg, 310, 285); nvgLineTo(vg, 300, 285);
-    nvgMoveTo(vg, 303, 285); nvgLineTo(vg, 310, 295);
+    nvgMoveTo(vg, x, y1+20); nvgLineTo(vg, x, y1); nvgLineTo(vg, x+10, y1);
+    nvgLineTo(vg, x+10, y1+10); nvgLineTo(vg, x, y1+10);
+    nvgMoveTo(vg, x+2, y1+10); nvgLineTo(vg, x+10, y1+20);
     nvgStroke(vg);
+    x += 14;
     // I
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 318, 275); nvgLineTo(vg, 318, 295);
+    nvgMoveTo(vg, x+5, y1); nvgLineTo(vg, x+5, y1+20);
     nvgStroke(vg);
+    x += 14;
     // G
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 335, 275); nvgLineTo(vg, 325, 275); nvgLineTo(vg, 325, 295);
-    nvgLineTo(vg, 335, 295); nvgLineTo(vg, 335, 285); nvgLineTo(vg, 330, 285);
+    nvgMoveTo(vg, x+10, y1); nvgLineTo(vg, x, y1); nvgLineTo(vg, x, y1+20);
+    nvgLineTo(vg, x+10, y1+20); nvgLineTo(vg, x+10, y1+10); nvgLineTo(vg, x+5, y1+10);
     nvgStroke(vg);
+    x += 14;
     // I
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 343, 275); nvgLineTo(vg, 343, 295);
+    nvgMoveTo(vg, x+5, y1); nvgLineTo(vg, x+5, y1+20);
     nvgStroke(vg);
+    x += 14;
     // N
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 350, 295); nvgLineTo(vg, 350, 275); nvgLineTo(vg, 360, 295);
-    nvgLineTo(vg, 360, 275);
+    nvgMoveTo(vg, x, y1+20); nvgLineTo(vg, x, y1); nvgLineTo(vg, x+10, y1+20);
+    nvgLineTo(vg, x+10, y1);
     nvgStroke(vg);
+    x += 14;
     // A
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 368, 295); nvgLineTo(vg, 373, 275); nvgLineTo(vg, 378, 295);
-    nvgMoveTo(vg, 370, 287); nvgLineTo(vg, 376, 287);
+    nvgMoveTo(vg, x, y1+20); nvgLineTo(vg, x+5, y1); nvgLineTo(vg, x+10, y1+20);
+    nvgMoveTo(vg, x+2, y1+12); nvgLineTo(vg, x+8, y1+12);
     nvgStroke(vg);
+    x += 14;
     // L
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 385, 275); nvgLineTo(vg, 385, 295); nvgLineTo(vg, 395, 295);
+    nvgMoveTo(vg, x, y1); nvgLineTo(vg, x, y1+20); nvgLineTo(vg, x+10, y1+20);
+    nvgStroke(vg);
+    x += 14;
+    // Line after text
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, x+5, y1+10); nvgLineTo(vg, 550, y1+10);
     nvgStroke(vg);
 
-    // "2"
+    // Row 2: "2  DELUXE" at y=330-350
+    float y2 = 330;
     nvgStrokeWidth(vg, 1.5f);
+    // "2" - same size as "1" (20px tall)
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 240, 330); nvgLineTo(vg, 260, 330); nvgLineTo(vg, 260, 345);
-    nvgLineTo(vg, 240, 345); nvgLineTo(vg, 240, 360); nvgLineTo(vg, 260, 360);
+    nvgMoveTo(vg, 252, y2); nvgLineTo(vg, 272, y2); nvgLineTo(vg, 272, y2+10);
+    nvgLineTo(vg, 252, y2+10); nvgLineTo(vg, 252, y2+20); nvgLineTo(vg, 272, y2+20);
     nvgStroke(vg);
 
-    // "DELUXE" underline
-    nvgBeginPath(vg);
-    nvgMoveTo(vg, 280, 330); nvgLineTo(vg, 520, 330);
-    nvgStroke(vg);
-
-    // Draw "DELUXE" label
-    nvgStrokeWidth(vg, 1.0f);
+    // "DELUXE"
+    nvgStrokeWidth(vg, 1.2f);
+    x = 290;
     // D
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 285, 325); nvgLineTo(vg, 285, 345); nvgLineTo(vg, 292, 345);
-    nvgLineTo(vg, 295, 340); nvgLineTo(vg, 295, 330); nvgLineTo(vg, 292, 325);
-    nvgLineTo(vg, 285, 325);
+    nvgMoveTo(vg, x, y2); nvgLineTo(vg, x, y2+20); nvgLineTo(vg, x+7, y2+20);
+    nvgLineTo(vg, x+10, y2+15); nvgLineTo(vg, x+10, y2+5); nvgLineTo(vg, x+7, y2);
+    nvgClosePath(vg);
     nvgStroke(vg);
+    x += 14;
     // E
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 310, 325); nvgLineTo(vg, 300, 325); nvgLineTo(vg, 300, 345);
-    nvgLineTo(vg, 310, 345);
-    nvgMoveTo(vg, 300, 335); nvgLineTo(vg, 308, 335);
+    nvgMoveTo(vg, x+10, y2); nvgLineTo(vg, x, y2); nvgLineTo(vg, x, y2+20);
+    nvgLineTo(vg, x+10, y2+20);
+    nvgMoveTo(vg, x, y2+10); nvgLineTo(vg, x+8, y2+10);
     nvgStroke(vg);
+    x += 14;
     // L
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 318, 325); nvgLineTo(vg, 318, 345); nvgLineTo(vg, 328, 345);
+    nvgMoveTo(vg, x, y2); nvgLineTo(vg, x, y2+20); nvgLineTo(vg, x+10, y2+20);
     nvgStroke(vg);
+    x += 14;
     // U
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 335, 325); nvgLineTo(vg, 335, 345); nvgLineTo(vg, 345, 345);
-    nvgLineTo(vg, 345, 325);
+    nvgMoveTo(vg, x, y2); nvgLineTo(vg, x, y2+20); nvgLineTo(vg, x+10, y2+20);
+    nvgLineTo(vg, x+10, y2);
     nvgStroke(vg);
+    x += 14;
     // X
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 352, 325); nvgLineTo(vg, 362, 345);
-    nvgMoveTo(vg, 362, 325); nvgLineTo(vg, 352, 345);
+    nvgMoveTo(vg, x, y2); nvgLineTo(vg, x+10, y2+20);
+    nvgMoveTo(vg, x+10, y2); nvgLineTo(vg, x, y2+20);
     nvgStroke(vg);
+    x += 14;
     // E
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 380, 325); nvgLineTo(vg, 370, 325); nvgLineTo(vg, 370, 345);
-    nvgLineTo(vg, 380, 345);
-    nvgMoveTo(vg, 370, 335); nvgLineTo(vg, 378, 335);
+    nvgMoveTo(vg, x+10, y2); nvgLineTo(vg, x, y2); nvgLineTo(vg, x, y2+20);
+    nvgLineTo(vg, x+10, y2+20);
+    nvgMoveTo(vg, x, y2+10); nvgLineTo(vg, x+8, y2+10);
+    nvgStroke(vg);
+    x += 14;
+    // Line after text
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, x+5, y2+10); nvgLineTo(vg, 550, y2+10);
     nvgStroke(vg);
 
     nvgEndFrame(vg);
