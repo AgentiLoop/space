@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd comprehensive README.md for space project collection\n\nDocument three Asteroids game implementations:\n- spacejunk: Terminal-based ARM64 assembly\n- spaces: ARM64 assembly with SDL2\n- spacevg: C with NanoVG vector graphics\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd comprehensive README.md for space project collection\n\nDocument three Asteroids game implementations:\n- spacejunk: Terminal-based ARM64 assembly\n- spaces: ARM64 assembly with SDL2\n- spacevg: C with NanoVG vector graphics\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd reference to AsteroidZ Swift SpriteKit version\n\nLink to the HD Asteroids remake for macOS Intel and ARM64\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
