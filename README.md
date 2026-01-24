@@ -1,6 +1,6 @@
 # Space - Asteroids Game Collection
 
-A collection of three classic Asteroids-style space shooter games, each implemented using different technologies. All projects target **macOS on Apple Silicon** (M1/M2/M3/M4) and were developed with Claude Code.
+A collection of three classic Asteroids-style space shooter games, each implemented using different technologies. For a complete HD Asteroids remake written in Swift using SpriteKit for macOS (Intel and ARM64), see [AsteroidZ](https://github.com/superbox64/AsteroidZ). All projects target **macOS on Apple Silicon** (M1/M2/M3/M4) and were developed with Claude Code.
 
 ## Projects
 
