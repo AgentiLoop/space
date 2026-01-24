@@ -23,6 +23,10 @@
 // Game states
 enum { STATE_START, STATE_PLAYING, STATE_GAMEOVER };
 
+// Game modes
+#define MODE_ORIGINAL 0
+#define MODE_DELUXE   1
+
 // Ship triangle vertices for 8 directions
 static const float ship_tri[8][6] = {
     { 0, -10, -7, 7, 7, 7 },      // Dir 0: up
@@ -54,6 +58,8 @@ typedef struct {
     int size;           // SIZE_LARGE, SIZE_MEDIUM, SIZE_SMALL
     int num_verts;      // Number of vertices in shape
     float verts[MAX_ASTEROID_VERTS][2];  // Pre-generated vertex positions
+    float angle;        // Current rotation angle (deluxe mode)
+    float rot_speed;    // Rotation speed (deluxe mode)
 } Obstacle;
 
 // Bullet structure
@@ -71,6 +77,7 @@ static struct {
 
     int running;
     int state;
+    int game_mode;      // MODE_ORIGINAL or MODE_DELUXE
 
     // Ship
     float ship_x, ship_y;
@@ -127,6 +134,8 @@ static void generate_asteroid_shape(Obstacle* o, int size) {
 
     o->size = size;
     o->num_verts = base_points * 3;  // 3x points for smoother shape
+    o->angle = 0;
+    o->rot_speed = (random_float() - 0.5f) * 0.04f;  // Random rotation speed for deluxe mode
 
     float angle_step = (2.0f * M_PI) / (float)base_points;
 
@@ -264,6 +273,18 @@ static void process_events(void) {
                 case SDL_SCANCODE_LEFT: game.key_left = 1; break;
                 case SDL_SCANCODE_RIGHT: game.key_right = 1; break;
                 case SDL_SCANCODE_SPACE: game.key_space = 1; break;
+                case SDL_SCANCODE_1:
+                    if (game.state == STATE_START) {
+                        game.game_mode = MODE_ORIGINAL;
+                        game.state = STATE_PLAYING;
+                    }
+                    break;
+                case SDL_SCANCODE_2:
+                    if (game.state == STATE_START) {
+                        game.game_mode = MODE_DELUXE;
+                        game.state = STATE_PLAYING;
+                    }
+                    break;
                 default: break;
             }
         } else if (e.type == SDL_KEYUP) {
@@ -388,6 +409,11 @@ static void update_game(void) {
         if (o->active) {
             o->x += o->vx;
             o->y += o->vy;
+
+            // Rotate asteroids in deluxe mode
+            if (game.game_mode == MODE_DELUXE) {
+                o->angle += o->rot_speed;
+            }
 
             if (o->x >= SCREEN_W) o->x -= SCREEN_W;
             if (o->x < 0) o->x += SCREEN_W;
@@ -641,12 +667,107 @@ static void render_start(void) {
     nvgClosePath(vg);
     nvgStroke(vg);
 
-    // "PRESS SPACE" hint
+    // "Press 1 for Original" using vector lines
     nvgStrokeColor(vg, nvgRGB(255, 255, 255));
-    nvgStrokeWidth(vg, 1.0f);
+    nvgStrokeWidth(vg, 1.5f);
+
+    // "1"
     nvgBeginPath(vg);
-    nvgMoveTo(vg, 300, 320);
-    nvgLineTo(vg, 500, 320);
+    nvgMoveTo(vg, 240, 280); nvgLineTo(vg, 250, 270); nvgLineTo(vg, 250, 310);
+    nvgMoveTo(vg, 240, 310); nvgLineTo(vg, 260, 310);
+    nvgStroke(vg);
+
+    // "ORIGINAL" text
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 280, 280); nvgLineTo(vg, 520, 280);  // line under text
+    nvgStroke(vg);
+
+    // Draw "ORIGINAL" label
+    nvgStrokeWidth(vg, 1.0f);
+    // O
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 285, 275); nvgLineTo(vg, 295, 275); nvgLineTo(vg, 295, 295);
+    nvgLineTo(vg, 285, 295); nvgClosePath(vg);
+    nvgStroke(vg);
+    // R
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 300, 295); nvgLineTo(vg, 300, 275); nvgLineTo(vg, 310, 275);
+    nvgLineTo(vg, 310, 285); nvgLineTo(vg, 300, 285);
+    nvgMoveTo(vg, 303, 285); nvgLineTo(vg, 310, 295);
+    nvgStroke(vg);
+    // I
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 318, 275); nvgLineTo(vg, 318, 295);
+    nvgStroke(vg);
+    // G
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 335, 275); nvgLineTo(vg, 325, 275); nvgLineTo(vg, 325, 295);
+    nvgLineTo(vg, 335, 295); nvgLineTo(vg, 335, 285); nvgLineTo(vg, 330, 285);
+    nvgStroke(vg);
+    // I
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 343, 275); nvgLineTo(vg, 343, 295);
+    nvgStroke(vg);
+    // N
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 350, 295); nvgLineTo(vg, 350, 275); nvgLineTo(vg, 360, 295);
+    nvgLineTo(vg, 360, 275);
+    nvgStroke(vg);
+    // A
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 368, 295); nvgLineTo(vg, 373, 275); nvgLineTo(vg, 378, 295);
+    nvgMoveTo(vg, 370, 287); nvgLineTo(vg, 376, 287);
+    nvgStroke(vg);
+    // L
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 385, 275); nvgLineTo(vg, 385, 295); nvgLineTo(vg, 395, 295);
+    nvgStroke(vg);
+
+    // "2"
+    nvgStrokeWidth(vg, 1.5f);
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 240, 330); nvgLineTo(vg, 260, 330); nvgLineTo(vg, 260, 345);
+    nvgLineTo(vg, 240, 345); nvgLineTo(vg, 240, 360); nvgLineTo(vg, 260, 360);
+    nvgStroke(vg);
+
+    // "DELUXE" underline
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 280, 330); nvgLineTo(vg, 520, 330);
+    nvgStroke(vg);
+
+    // Draw "DELUXE" label
+    nvgStrokeWidth(vg, 1.0f);
+    // D
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 285, 325); nvgLineTo(vg, 285, 345); nvgLineTo(vg, 292, 345);
+    nvgLineTo(vg, 295, 340); nvgLineTo(vg, 295, 330); nvgLineTo(vg, 292, 325);
+    nvgLineTo(vg, 285, 325);
+    nvgStroke(vg);
+    // E
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 310, 325); nvgLineTo(vg, 300, 325); nvgLineTo(vg, 300, 345);
+    nvgLineTo(vg, 310, 345);
+    nvgMoveTo(vg, 300, 335); nvgLineTo(vg, 308, 335);
+    nvgStroke(vg);
+    // L
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 318, 325); nvgLineTo(vg, 318, 345); nvgLineTo(vg, 328, 345);
+    nvgStroke(vg);
+    // U
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 335, 325); nvgLineTo(vg, 335, 345); nvgLineTo(vg, 345, 345);
+    nvgLineTo(vg, 345, 325);
+    nvgStroke(vg);
+    // X
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 352, 325); nvgLineTo(vg, 362, 345);
+    nvgMoveTo(vg, 362, 325); nvgLineTo(vg, 352, 345);
+    nvgStroke(vg);
+    // E
+    nvgBeginPath(vg);
+    nvgMoveTo(vg, 380, 325); nvgLineTo(vg, 370, 325); nvgLineTo(vg, 370, 345);
+    nvgLineTo(vg, 380, 345);
+    nvgMoveTo(vg, 370, 335); nvgLineTo(vg, 378, 335);
     nvgStroke(vg);
 
     nvgEndFrame(vg);
@@ -713,13 +834,19 @@ static void render_game(void) {
     for (int i = 0; i < MAX_OBSTACLES; i++) {
         Obstacle* o = &game.obstacles[i];
         if (o->active && o->num_verts > 0) {
+            nvgSave(vg);
+            nvgTranslate(vg, o->x, o->y);
+            if (game.game_mode == MODE_DELUXE) {
+                nvgRotate(vg, o->angle);
+            }
             nvgBeginPath(vg);
-            nvgMoveTo(vg, o->x + o->verts[0][0], o->y + o->verts[0][1]);
+            nvgMoveTo(vg, o->verts[0][0], o->verts[0][1]);
             for (int v = 1; v < o->num_verts; v++) {
-                nvgLineTo(vg, o->x + o->verts[v][0], o->y + o->verts[v][1]);
+                nvgLineTo(vg, o->verts[v][0], o->verts[v][1]);
             }
             nvgClosePath(vg);
             nvgStroke(vg);
+            nvgRestore(vg);
         }
     }
 
