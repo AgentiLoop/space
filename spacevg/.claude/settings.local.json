@@ -15,7 +15,9 @@
       "WebFetch(domain:www.ferzkopp.net)",
       "WebFetch(domain:www.geeksforgeeks.org)",
       "Bash(brew list:*)",
-      "Bash(brew search:*)"
+      "Bash(brew search:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
