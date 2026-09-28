@@ -85,3 +85,9 @@ Run `xcode-select --install` to install the Command Line Tools.
 ### Build fails on Intel Mac
 
 This game is written in ARM64 assembly and only runs on Apple Silicon Macs (M1/M2/M3/M4).
+
+---
+
+**AgentiLoop:** [agentiloop.ai](https://agentiloop.ai/)
+
+Copyright © 2026 AgentiLoop.ai, a Logos InkPen LLC company. All rights reserved.

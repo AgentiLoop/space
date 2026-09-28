@@ -194,3 +194,9 @@ Ensure your Mac supports OpenGL 3.2. All Apple Silicon Macs support this.
 ## License
 
 This project is provided as-is for educational purposes.
+
+---
+
+**AgentiLoop:** [agentiloop.ai](https://agentiloop.ai/)
+
+Copyright © 2026 AgentiLoop.ai, a Logos InkPen LLC company. All rights reserved.

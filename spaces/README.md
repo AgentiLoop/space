@@ -246,3 +246,9 @@ This project is provided as-is for educational purposes demonstrating ARM64 asse
 ## Author
 
 Created with ARM64 assembly on Apple Silicon.
+
+---
+
+**AgentiLoop:** [agentiloop.ai](https://agentiloop.ai/)
+
+Copyright © 2026 AgentiLoop.ai, a Logos InkPen LLC company. All rights reserved.

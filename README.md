@@ -95,3 +95,9 @@ All three implement the same game, showcasing how the same logic can be expresse
 ---
 
 *Built with Claude Code*
+
+---
+
+**AgentiLoop:** [agentiloop.ai](https://agentiloop.ai/)
+
+Copyright © 2026 AgentiLoop.ai, a Logos InkPen LLC company. All rights reserved.
