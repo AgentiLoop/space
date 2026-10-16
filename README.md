@@ -1,5 +1,8 @@
 # Space - Asteroids Game Collection
 
+🤖 **Built by the makers of [Agent!](https://github.com/AgentiLoop/Agent)**, an autonomous macOS agent.
+
+
 A collection of three classic Asteroids-style space shooter games, each implemented using different technologies. All projects in this repo target **macOS on Apple Silicon** (M1/M2/M3/M4/M5) and were developed with Claude Code.
 
 For a complete HD Asteroids remake written in Swift using SpriteKit for macOS (Intel and ARM64), see [AsteroidZ](https://github.com/superbox64/AsteroidZ).
